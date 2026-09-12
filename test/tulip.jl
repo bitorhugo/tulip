@@ -15,7 +15,7 @@ const Prob  = :Prob
                     () -> 2)
 
     BaseRate = Component(:BaseRate,
-                         decl([], [(:rate, Rate)]),
+                         decl([], [(:out, Rate)]),
                          () -> 0.03)
 
     Grow = Component(:Grow,
@@ -33,30 +33,40 @@ const Prob  = :Prob
                               [(:out, Prob)]),
                          (rate) -> 1 / (1 + exp(-rate)))
 
-    path = Composition([One, Two, Ratio, Logistic],
-                       [(1, :out) => (3, :num),
-                        (2, :out) => (3, :den),
-                        (3, :out) => (4, :rate)])
+    @testset "correct compositions" begin
+        @test typecheck(Composition([One, Two, Ratio, Logistic],
+                                    [(1, :out) => (3, :num),
+                                     (2, :out) => (3, :den),
+                                     (3, :out) => (4, :rate)]))
 
-    @test typecheck(Composition([One, Two, Ratio, Logistic],
-                                [(1, :out) => (3, :num),
-                                 (2, :out) => (3, :den),
-                                 (3, :out) => (4, :rate)]))
+        @test typecheck(Composition([Two, BaseRate, Grow],
+                                    [(1, :out) => (3, :amount),
+                                     (2, :out) => (3, :rate)]))
 
-    @test typecheck(Composition([One, Two, Ratio, Logistic],
-                                [(1, :out) => (4, :rate)])).kind ==
-                                    :type
+        @test typecheck(Composition([One, Two, Ratio, Grow],
+                                    [(1, :out) => (3, :num),
+                                     (2, :out) => (3, :den),
+                                     (2, :out) => (4, :amount),
+                                     (3, :out) => (4, :rate)]))
+    end
 
-    @test typecheck(Composition([One, Two, Ratio],
-                                [(1, :out) => (3, :foo)])).kind ==
-                                    :port
+    @testset "erroneous compositions" begin
 
-    @test typecheck(Composition([Ratio, Logistic],
-                                [(1, :out) => (2, :rate),
-                                 (2, :out) => (1, :num)])).kind ==
-                                     :cyclic
+        @test typecheck(Composition([One, Two, Ratio, Logistic],
+                                    [(1, :out) => (4, :rate)])).kind ==
+                                        :type
 
-    @test typecheck(Composition([One, Ratio],
-                                [(1, :out) => (2, :num)])).kind ==
-                                    :dangling
+        @test typecheck(Composition([One, Two, Ratio],
+                                    [(1, :out) => (3, :foo)])).kind ==
+                                        :port
+
+        @test typecheck(Composition([Ratio, Logistic],
+                                    [(1, :out) => (2, :rate),
+                                     (2, :out) => (1, :num)])).kind ==
+                                         :cyclic
+
+        @test typecheck(Composition([One, Ratio],
+                                    [(1, :out) => (2, :num)])).kind ==
+                                        :dangling
+    end
 end
