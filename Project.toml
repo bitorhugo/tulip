@@ -1,0 +1,15 @@
+name = "Tulip"
+uuid = "6789ba20-ee72-4617-90c7-d1448ae8820b"
+version = "0.0.1"
+
+[deps]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[compat]
+Test = "1.11.0"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
