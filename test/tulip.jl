@@ -52,12 +52,13 @@ const Prob  = :Prob
 
     @testset "erroneous compositions" begin
 
-        @test typecheck(Composition([One, Two, Ratio, Logistic],
-                                    [(1, :out) => (4, :rate)])).kind ==
+        @test typecheck(Composition([One, Logistic],
+                                    [(1, :out) => (2, :rate)])).kind ==
                                         :type
 
-        @test typecheck(Composition([One, Two, Ratio],
-                                    [(1, :out) => (3, :foo)])).kind ==
+        @test typecheck(Composition([One, Ratio],
+                                    [(1, :out) => (2, :foo)
+                                     (1, :out) => (2, :den)])).kind ==
                                         :port
 
         @test typecheck(Composition([Ratio, Logistic],
