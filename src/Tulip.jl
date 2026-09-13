@@ -43,11 +43,33 @@ struct Composition
     edges::Vector{Pair{PortRef,PortRef}}
 end
 
-Composition(nodes, edges::Vector{Pair{Tuple{Int64, Symbol},
-                                      Tuple{Int64, Symbol}}}) =
+Composition(nodes, edges::Vector{Pair{Tuple{Int64, Symbol}, Tuple{Int64, Symbol}}}) =
     Composition(nodes,
-                [PortRef(from[1], from[2]) => PortRef(to[1], to[2])
+                [PortRef(from...) => PortRef(to...)
                  for (from, to) in edges])
+
+function toposort(c::Composition)
+    l = length(c.nodes)
+    visited = fill(false, l)
+    order = Int[]
+
+    function visit(n)
+        visited[n] && return
+        visited[n] = true
+        for e in c.edges
+            if e.second.nodeid == n
+                visit(e.first.nodeid)
+            end
+        end
+        push!(order, n)
+    end
+
+    for n in 1:l
+        visit(n)
+    end
+
+    return order
+end
 
 function typecheck(c::Composition)
     visited = fill(false, length(c.nodes))
@@ -92,12 +114,12 @@ function typecheck(c::Composition)
     end
 
     for n in c.nodes
-        for in in n.decl.inputs # components with no inputs don't error
-            i = findfirst((edge) -> edge.second.portname == in.name, c.edges)
+        for inp in n.decl.inputs # components with no inputs don't error
+
+            i = findfirst((e) -> e.second.portname == inp.name, c.edges)
+
             if isnothing(i)
-                return CompositionError(:dangling,
-                                        in.name,
-                                        i)
+                return CompositionError(:dangling, inp.name, i)
             end
         end
     end
