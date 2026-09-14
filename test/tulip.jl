@@ -70,4 +70,31 @@ const Prob  = :Prob
                                     [(1, :out) => (2, :num)])).kind ==
                                         :dangling
     end
+
+    @testset "interpreter" begin
+        @test toposort(Composition([One, Two, Ratio, Grow],
+                                   [(1, :out) => (3, :num),
+                                    (2, :out) => (3, :den),
+                                    (2, :out) => (4, :amount),
+                                    (3, :out) => (4, :rate)])) ==
+                                        [1, 2, 3, 4]
+
+        @test evaluate(Composition([Two, BaseRate, Grow],
+                                   [(1, :out) => (3, :amount),
+                                    (2, :out) => (3, :rate)])) ==
+                                        [2, 0.03, 2.06]
+
+        @test evaluate(Composition([One, Two, Ratio, Logistic],
+                                   [(1, :out) => (3, :num),
+                                    (2, :out) => (3, :den),
+                                    (3, :out) => (4, :rate)])) ==
+                                        [1, 2, 0.5, 0.6224593312018546]
+
+        @test evaluate(Composition([One, Two, Ratio, Grow],
+                                   [(1, :out) => (3, :num),
+                                    (2, :out) => (3, :den),
+                                    (2, :out) => (4, :amount),
+                                    (3, :out) => (4, :rate)])) ==
+                                        [1, 2, 0.5, 3.0]
+    end
 end

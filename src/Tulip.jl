@@ -48,6 +48,25 @@ Composition(nodes, edges::Vector{Pair{Tuple{Int64, Symbol}, Tuple{Int64, Symbol}
                 [PortRef(from...) => PortRef(to...)
                  for (from, to) in edges])
 
+function evaluate(c::Composition)
+    order = toposort(c)
+    outputs = Vector{Any}(undef, length(c.nodes))
+
+    for n in order
+        inp = c.nodes[n].decl.inputs
+        args = []
+
+        for port in inp
+            idx = findfirst((e) -> e.second.portname == port.name, c.edges)
+            push!(args, outputs[c.edges[idx].first.nodeid])
+        end
+
+        outputs[n] = c.nodes[n].impl(args...)
+    end
+
+    return outputs
+end
+
 function toposort(c::Composition)
     l = length(c.nodes)
     visited = fill(false, l)
